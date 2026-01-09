@@ -28,6 +28,7 @@ WORKDIR /root/tools
 # - stow: symlink farm manager (for dotfiles)
 # - jq: JSON processor
 # - jo: JSON output generator
+# - unzip: archive extraction (needed for deno install)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -39,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     stow \
     jq \
     jo \
+    unzip \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/fdfind /usr/local/bin/fd
 
@@ -58,6 +60,35 @@ RUN JJ_VERSION="0.37.0" && \
     if [ "$ARCH" = "aarch64" ]; then JJ_ARCH="aarch64-unknown-linux-musl"; fi && \
     curl -fsSL "https://github.com/jj-vcs/jj/releases/download/v${JJ_VERSION}/jj-v${JJ_VERSION}-${JJ_ARCH}.tar.gz" \
     | tar -xzf - -C /usr/local/bin --strip-components=1 ./jj
+
+# Install deno runtime from official installer
+# JavaScript/TypeScript runtime with built-in tooling
+RUN DENO_VERSION="v2.1.5" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then DENO_ARCH="x86_64-unknown-linux-gnu"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then DENO_ARCH="aarch64-unknown-linux-gnu"; fi && \
+    curl -fsSL "https://github.com/denoland/deno/releases/download/${DENO_VERSION}/deno-${DENO_ARCH}.zip" -o /tmp/deno.zip && \
+    unzip -q /tmp/deno.zip -d /usr/local/bin && \
+    rm /tmp/deno.zip && \
+    chmod +x /usr/local/bin/deno
+
+# Install just command runner from GitHub releases
+# Handy way to save and run project-specific commands
+RUN JUST_VERSION="1.40.0" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then JUST_ARCH="x86_64-unknown-linux-musl"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then JUST_ARCH="aarch64-unknown-linux-musl"; fi && \
+    curl -fsSL "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-${JUST_ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin just
+
+# Install GitHub CLI (gh) from GitHub releases
+# GitHub's official command line tool
+RUN GH_VERSION="2.67.0" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then GH_ARCH="linux_amd64"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then GH_ARCH="linux_arm64"; fi && \
+    curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_${GH_ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin --strip-components=2 gh_${GH_VERSION}_${GH_ARCH}/bin/gh
 
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish
