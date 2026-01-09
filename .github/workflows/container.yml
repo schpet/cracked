@@ -3,7 +3,7 @@ name: Build and Push Container Images
 on:
   push:
     tags:
-      - "container-v*"
+      - "v*"
   workflow_dispatch:
 
 env:
@@ -41,7 +41,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=match,pattern=container-v(.*),group=1
+            type=match,pattern=v(.*),group=1
             type=raw,value=latest
             type=raw,value=base
           flavor: |
@@ -88,7 +88,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=match,pattern=container-v(.*),group=1,suffix=-deno
+            type=match,pattern=v(.*),group=1,suffix=-deno
             type=raw,value=deno
           flavor: |
             latest=false
@@ -150,7 +150,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=match,pattern=container-v(.*),group=1,suffix=-rust
+            type=match,pattern=v(.*),group=1,suffix=-rust
             type=raw,value=rust
           flavor: |
             latest=false
@@ -217,7 +217,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=match,pattern=container-v(.*),group=1,suffix=-rails
+            type=match,pattern=v(.*),group=1,suffix=-rails
             type=raw,value=rails
           flavor: |
             latest=false
@@ -254,9 +254,9 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/container-v* ]]; then
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             version="${{ github.ref_name }}"
-            version="${version#container-v}"
+            version="${version#v}"
             echo "version=$version" >> $GITHUB_OUTPUT
           else
             echo "version=" >> $GITHUB_OUTPUT
