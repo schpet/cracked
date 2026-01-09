@@ -90,6 +90,22 @@ RUN GH_VERSION="2.67.0" && \
     curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_${GH_ARCH}.tar.gz" \
     | tar -xz -C /usr/local/bin --strip-components=2 gh_${GH_VERSION}_${GH_ARCH}/bin/gh
 
+# Install git-delta (syntax-highlighting pager for git/diff output)
+RUN DELTA_VERSION="0.18.2" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then DELTA_ARCH="x86_64-unknown-linux-musl"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then DELTA_ARCH="aarch64-unknown-linux-gnu"; fi && \
+    curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${DELTA_ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin --strip-components=1 delta-${DELTA_VERSION}-${DELTA_ARCH}/delta
+
+# Install sd (intuitive find & replace CLI, sed alternative)
+RUN SD_VERSION="1.0.0" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then SD_ARCH="x86_64-unknown-linux-musl"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then SD_ARCH="aarch64-unknown-linux-musl"; fi && \
+    curl -fsSL "https://github.com/chmln/sd/releases/download/v${SD_VERSION}/sd-v${SD_VERSION}-${SD_ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin --strip-components=1 sd-v${SD_VERSION}-${SD_ARCH}/sd
+
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish
 CMD ["/usr/bin/fish"]
