@@ -132,13 +132,15 @@ RUN SVBUMP_VERSION="1.0.0" && \
     curl -fsSL "https://github.com/schpet/svbump/releases/download/v${SVBUMP_VERSION}/svbump-${SVBUMP_ARCH}.tar.xz" \
     | tar -xJ -C /usr/local/bin --strip-components=1 svbump-${SVBUMP_ARCH}/svbump
 
-# Configure fish shell with starship prompt and PATH
-RUN mkdir -p /root/.config/fish && \
-    echo '# Add deno bin directory to PATH for deno-installed tools' >> /root/.config/fish/config.fish && \
-    echo 'fish_add_path -g ~/.deno/bin' >> /root/.config/fish/config.fish && \
-    echo '' >> /root/.config/fish/config.fish && \
-    echo '# Initialize starship prompt' >> /root/.config/fish/config.fish && \
-    echo 'starship init fish | source' >> /root/.config/fish/config.fish
+# Clone and install dotfiles using stow
+# Dotfiles provide configuration for jj, fish, git, starship, and other tools
+RUN git clone --depth 1 https://github.com/schpet/dotfiles.git /root/dotfiles && \
+    cd /root/dotfiles && \
+    echo "=== Stow output ===" && \
+    stow . -t /root -v 2 --adopt 2>&1 && \
+    echo "=== Symlinks created ===" && \
+    ls -la /root/.config/ && \
+    echo "=== Dotfiles installation complete ==="
 
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish
