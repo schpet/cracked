@@ -1,0 +1,20 @@
+# All available ebo configuration options:
+#
+# gates = [
+#   "deno fmt --check",
+#   "deno lint",
+#   "deno test -A",
+# ]
+#
+# [vcs]
+# enabled = true
+# command = "jj"
+#
+# [[reviews]]
+# prompt = "Check for security vulnerabilities"
+
+gates = [
+]
+
+[vcs]
+command = "jj"
