@@ -106,6 +106,18 @@ RUN SD_VERSION="1.0.0" && \
     curl -fsSL "https://github.com/chmln/sd/releases/download/v${SD_VERSION}/sd-v${SD_VERSION}-${SD_ARCH}.tar.gz" \
     | tar -xz -C /usr/local/bin --strip-components=1 sd-v${SD_VERSION}-${SD_ARCH}/sd
 
+# Install starship prompt (cross-shell prompt with rich customization)
+RUN STARSHIP_VERSION="1.24.2" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then STARSHIP_ARCH="x86_64-unknown-linux-musl"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then STARSHIP_ARCH="aarch64-unknown-linux-musl"; fi && \
+    curl -fsSL "https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${STARSHIP_ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin starship
+
+# Configure fish shell with starship prompt
+RUN mkdir -p /root/.config/fish && \
+    echo 'starship init fish | source' >> /root/.config/fish/config.fish
+
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish
 CMD ["/usr/bin/fish"]
