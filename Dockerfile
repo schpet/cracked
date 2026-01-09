@@ -132,15 +132,35 @@ RUN SVBUMP_VERSION="1.0.0" && \
     curl -fsSL "https://github.com/schpet/svbump/releases/download/v${SVBUMP_VERSION}/svbump-${SVBUMP_ARCH}.tar.xz" \
     | tar -xJ -C /usr/local/bin --strip-components=1 svbump-${SVBUMP_ARCH}/svbump
 
-# Clone and install dotfiles using stow
+# Clone and install dotfiles using install.sh
 # Dotfiles provide configuration for jj, fish, git, starship, and other tools
 RUN git clone --depth 1 https://github.com/schpet/dotfiles.git /root/dotfiles && \
     cd /root/dotfiles && \
-    echo "=== Stow output ===" && \
+    echo "=== Installing dotfiles ===" && \
+    # Backup and stow (core of install.sh, skipping apt since we have all tools)
+    mv /root/.gitconfig /root/.gitconfig.orig 2>/dev/null || true && \
+    mv /root/.zshrc /root/.zshrc.orig 2>/dev/null || true && \
     stow . -t /root -v 2 --adopt 2>&1 && \
     echo "=== Symlinks created ===" && \
     ls -la /root/.config/ && \
     echo "=== Dotfiles installation complete ==="
+
+# Clone and install deno tools from GitHub
+# gogreen: run claude code in a loop to fix github CI status checks
+# easy-bead-oven: orchestrator that processes beads issues
+RUN echo "=== Installing deno tools ===" && \
+    # Clone gogreen
+    git clone --depth 1 https://github.com/schpet/gogreen.git /root/tools/gogreen && \
+    cd /root/tools/gogreen && \
+    just install && \
+    # Clone easy-bead-oven
+    git clone --depth 1 https://github.com/schpet/easy-bead-oven.git /root/tools/easy-bead-oven && \
+    cd /root/tools/easy-bead-oven && \
+    deno install -c ./deno.json -A -g -f -n ebo ./main.ts && \
+    echo "=== Deno tools installation complete ==="
+
+# Add deno bin to PATH
+ENV PATH="/root/.deno/bin:${PATH}"
 
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish
