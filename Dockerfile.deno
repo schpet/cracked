@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+
+# Deno child image for cracked development environment
+# Inherits from base and adds Deno runtime
+# Registry: ghcr.io/schpet/cracked:deno
+
+FROM cracked:base
+
+LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
+LABEL org.opencontainers.image.description="Development environment with Deno runtime"
+
+# Install unzip (required by deno installer)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Deno
+# Using official install script which handles architecture detection
+ENV DENO_INSTALL="/root/.deno"
+ENV PATH="${DENO_INSTALL}/bin:${PATH}"
+
+RUN curl -fsSL https://deno.land/install.sh | sh
+
+# Verify installation
+RUN deno --version
+
+CMD ["/bin/bash"]
