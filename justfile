@@ -143,6 +143,15 @@ clean:
     -docker rmi $(docker images "{{image}}" -q) 2>/dev/null || true
     @echo "Done"
 
+# Verify container images are published
+# Usage: just verify <version> [variant]
+verify version variant="":
+    ./scripts/verify-container "{{version}}" "{{variant}}"
+
+# List published container versions
+verify-list:
+    ./scripts/verify-container --list
+
 # Show available recipes
 help:
     @just --list

@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+# Verify container images are published to ghcr.io
+#
+# Usage:
+#   verify-container <version>           # Verify all expected tags for version
+#   verify-container <version> <variant> # Verify specific variant
+#   verify-container --list              # List all published versions
+#
+# Examples:
+#   verify-container 1.0.0              # Verify 1.0.0, 1.0.0-deno, 1.0.0-rust exist
+#   verify-container 1.0.0 deno         # Verify only 1.0.0-deno exists
+#   verify-container --list             # List all published package versions
+#
+# Requires: gh CLI with read:packages scope
+
+set -euo pipefail
+
+# Configuration
+OWNER="${GITHUB_REPOSITORY_OWNER:-schpet}"
+PACKAGE_NAME="cracked"
+PACKAGE_TYPE="container"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+# Expected variants based on existing Dockerfiles
+VARIANTS="base deno rust rails"
+
+usage() {
+    cat << 'EOF'
+Usage:
+  verify-container <version>           Verify all expected tags for version
+  verify-container <version> <variant> Verify specific variant
+  verify-container --list              List all published versions
+  verify-container --help              Show this help
+
+Examples:
+  verify-container 1.0.0               Verify 1.0.0, 1.0.0-deno, 1.0.0-rust exist
+  verify-container 1.0.0 deno          Verify only 1.0.0-deno exists
+  verify-container --list              List all published package versions
+
+Environment:
+  GITHUB_REPOSITORY_OWNER  Override owner (default: schpet)
+
+Requires:
+  gh CLI authenticated with read:packages scope
+EOF
+}
+
+# Check gh CLI is available and authenticated
+check_gh() {
+    if ! command -v gh &> /dev/null; then
+        echo -e "${RED}Error: gh CLI not found${NC}"
+        echo "Install from: https://cli.github.com/"
+        exit 1
+    fi
+
+    if ! gh auth status &> /dev/null; then
+        echo -e "${RED}Error: gh CLI not authenticated${NC}"
+        echo "Run: gh auth login"
+        exit 1
+    fi
+}
+
+# Get all tags for the package
+get_all_tags() {
+    gh api "/users/${OWNER}/packages/${PACKAGE_TYPE}/${PACKAGE_NAME}/versions" \
+        --paginate \
+        --jq '.[].metadata.container.tags[]' 2>/dev/null || echo ""
+}
+
+# Check if a specific tag exists
+tag_exists() {
+    local tag="$1"
+    local tags
+    tags=$(get_all_tags)
+    echo "$tags" | grep -qx "$tag"
+}
+
+# List all versions
+list_versions() {
+    echo "Fetching package versions for ${OWNER}/${PACKAGE_NAME}..."
+    echo ""
+
+    local versions
+    versions=$(gh api "/users/${OWNER}/packages/${PACKAGE_TYPE}/${PACKAGE_NAME}/versions" \
+        --paginate \
+        --jq '.[] | "\(.id)\t\(.metadata.container.tags | join(", "))\t\(.created_at)"' 2>/dev/null) || {
+        echo -e "${YELLOW}No versions found or package does not exist${NC}"
+        echo ""
+        echo "This could mean:"
+        echo "  - The package hasn't been published yet"
+        echo "  - Your token needs read:packages scope"
+        echo "  - The package name or owner is incorrect"
+        return 1
+    }
+
+    if [ -z "$versions" ]; then
+        echo -e "${YELLOW}No versions found${NC}"
+        return 1
+    fi
+
+    echo -e "ID\tTags\tCreated"
+    echo "----------------------------------------"
+    echo "$versions"
+}
+
+# Verify tags for a version
+verify_version() {
+    local version="$1"
+    local variant="${2:-}"
+    local failed=0
+    local passed=0
+    local skipped=0
+
+    echo "Verifying container images for version: ${version}"
+    echo "Package: ghcr.io/${OWNER}/${PACKAGE_NAME}"
+    echo ""
+
+    # Get all existing tags once
+    local all_tags
+    all_tags=$(get_all_tags) || {
+        echo -e "${RED}Failed to fetch package tags${NC}"
+        echo ""
+        echo "This could mean:"
+        echo "  - The package hasn't been published yet"
+        echo "  - Your token needs read:packages scope"
+        return 1
+    }
+
+    if [ -z "$all_tags" ]; then
+        echo -e "${RED}No tags found for package${NC}"
+        return 1
+    fi
+
+    # Build list of tags to check
+    local tags_to_check=()
+
+    if [ -n "$variant" ]; then
+        # Check specific variant
+        if [ "$variant" = "base" ]; then
+            tags_to_check+=("$version" "latest" "base")
+        else
+            tags_to_check+=("${version}-${variant}" "$variant")
+        fi
+    else
+        # Check all expected tags for this version
+        tags_to_check+=("$version" "latest" "base")
+
+        # Check variant tags (only if their Dockerfile exists)
+        for v in deno rust rails; do
+            if [ -f "Dockerfile.${v}" ]; then
+                tags_to_check+=("${version}-${v}" "$v")
+            else
+                echo -e "${YELLOW}⊘${NC} Skipping ${v} (Dockerfile.${v} not found)"
+                ((skipped++))
+            fi
+        done
+    fi
+
+    echo ""
+    echo "Checking tags:"
+
+    for tag in "${tags_to_check[@]}"; do
+        if echo "$all_tags" | grep -qx "$tag"; then
+            echo -e "${GREEN}✓${NC} ${tag}"
+            ((passed++))
+        else
+            echo -e "${RED}✗${NC} ${tag} - NOT FOUND"
+            ((failed++))
+        fi
+    done
+
+    echo ""
+    echo "----------------------------------------"
+    echo -e "Passed: ${GREEN}${passed}${NC}, Failed: ${RED}${failed}${NC}, Skipped: ${YELLOW}${skipped}${NC}"
+
+    if [ "$failed" -gt 0 ]; then
+        echo ""
+        echo -e "${RED}Verification failed!${NC}"
+        return 1
+    else
+        echo ""
+        echo -e "${GREEN}All expected tags verified!${NC}"
+        return 0
+    fi
+}
+
+# Main
+main() {
+    if [ $# -eq 0 ]; then
+        usage
+        exit 1
+    fi
+
+    case "$1" in
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        --list|-l)
+            check_gh
+            list_versions
+            ;;
+        *)
+            check_gh
+            verify_version "$@"
+            ;;
+    esac
+}
+
+main "$@"
