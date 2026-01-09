@@ -29,6 +29,7 @@ WORKDIR /root/tools
 # - jq: JSON processor
 # - jo: JSON output generator
 # - unzip: archive extraction (needed for deno install)
+# - xz-utils: xz compression (needed for tar.xz archives)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -41,6 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     jo \
     unzip \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/fdfind /usr/local/bin/fd
 
@@ -113,6 +115,22 @@ RUN STARSHIP_VERSION="1.24.2" && \
     if [ "$ARCH" = "aarch64" ]; then STARSHIP_ARCH="aarch64-unknown-linux-musl"; fi && \
     curl -fsSL "https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${STARSHIP_ARCH}.tar.gz" \
     | tar -xz -C /usr/local/bin starship
+
+# Install changelog (changelog management tool) from GitHub releases
+RUN CHANGELOG_VERSION="1.0.0" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then CHANGELOG_ARCH="x86_64-unknown-linux-gnu"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then CHANGELOG_ARCH="aarch64-unknown-linux-gnu"; fi && \
+    curl -fsSL "https://github.com/schpet/changelog/releases/download/v${CHANGELOG_VERSION}/changelog-${CHANGELOG_ARCH}.tar.xz" \
+    | tar -xJ -C /usr/local/bin --strip-components=1 changelog-${CHANGELOG_ARCH}/changelog
+
+# Install svbump (semantic version bump tool) from GitHub releases
+RUN SVBUMP_VERSION="1.0.0" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then SVBUMP_ARCH="x86_64-unknown-linux-gnu"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then SVBUMP_ARCH="aarch64-unknown-linux-gnu"; fi && \
+    curl -fsSL "https://github.com/schpet/svbump/releases/download/v${SVBUMP_VERSION}/svbump-${SVBUMP_ARCH}.tar.xz" \
+    | tar -xJ -C /usr/local/bin --strip-components=1 svbump-${SVBUMP_ARCH}/svbump
 
 # Configure fish shell with starship prompt
 RUN mkdir -p /root/.config/fish && \
