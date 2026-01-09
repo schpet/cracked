@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1
+
+# Rust child image for cracked development environment
+# Inherits from base and adds Rust toolchain with cargo ecosystem
+# Registry: ghcr.io/schpet/cracked:rust
+
+ARG BASE_IMAGE=cracked:base
+FROM ${BASE_IMAGE}
+
+LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
+LABEL org.opencontainers.image.description="Development environment with Rust toolchain and cargo ecosystem"
+
+# Install build dependencies required for compiling Rust packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust using rustup (official installer)
+# This handles architecture detection automatically
+ENV RUSTUP_HOME="/root/.rustup"
+ENV CARGO_HOME="/root/.cargo"
+ENV PATH="${CARGO_HOME}/bin:${PATH}"
+
+# Install Rust stable toolchain with components
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    --default-toolchain stable \
+    --component clippy \
+    --component rustfmt
+
+# Verify rustc/cargo installation
+RUN rustc --version && cargo --version
+
+# Install cargo plugins
+# cargo-dist: for building distributable binaries
+# cargo-watch: for auto-rebuilding on file changes
+# cargo-edit: for managing dependencies from CLI (cargo add/rm/upgrade)
+RUN cargo install cargo-dist cargo-watch cargo-edit
+
+# Verify all tools are installed
+# Note: cargo-dist installs as 'dist', cargo-watch as 'cargo-watch', cargo-edit as 'cargo-set-version'
+RUN clippy-driver --version && \
+    rustfmt --version && \
+    dist --version && \
+    cargo-watch --version && \
+    cargo set-version --version
+
+CMD ["/bin/bash"]
