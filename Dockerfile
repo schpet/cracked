@@ -50,6 +50,15 @@ RUN ARCH=$(uname -m) && \
     curl -fsSL "https://github.com/eza-community/eza/releases/download/v0.20.24/eza_${EZA_ARCH}.tar.gz" \
     | tar -xz -C /usr/local/bin --strip-components=0
 
+# Install jj (jujutsu) version control from GitHub releases
+# Modern Git-compatible VCS with first-class support for conflicts and anonymous branches
+RUN JJ_VERSION="0.37.0" && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then JJ_ARCH="x86_64-unknown-linux-musl"; fi && \
+    if [ "$ARCH" = "aarch64" ]; then JJ_ARCH="aarch64-unknown-linux-musl"; fi && \
+    curl -fsSL "https://github.com/jj-vcs/jj/releases/download/v${JJ_VERSION}/jj-v${JJ_VERSION}-${JJ_ARCH}.tar.gz" \
+    | tar -xzf - -C /usr/local/bin --strip-components=1 ./jj
+
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish
 CMD ["/usr/bin/fish"]
