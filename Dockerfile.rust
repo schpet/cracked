@@ -3,6 +3,9 @@
 # Rust child image for cracked development environment
 # Inherits from base and adds Rust toolchain with cargo ecosystem
 # Registry: ghcr.io/schpet/cracked:rust
+#
+# Can also setup Rust directly:
+#   curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --rust
 
 ARG BASE_IMAGE=cracked:base
 FROM ${BASE_IMAGE}
@@ -10,44 +13,20 @@ FROM ${BASE_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
 LABEL org.opencontainers.image.description="Development environment with Rust toolchain and cargo ecosystem"
 
-# Switch to root for system package installation
-USER root
-
-# Install build dependencies required for compiling Rust packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    pkg-config \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Switch back to dev user
-USER dev
-WORKDIR /home/dev
-
 # Install Rust using rustup (official installer)
 # This handles architecture detection automatically
 ENV RUSTUP_HOME="/home/dev/.rustup"
 ENV CARGO_HOME="/home/dev/.cargo"
 ENV PATH="${CARGO_HOME}/bin:${PATH}"
 
-# Install Rust stable toolchain with components
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-    --default-toolchain stable \
-    --component clippy \
-    --component rustfmt
-
-# Verify rustc/cargo installation
-RUN rustc --version && cargo --version
-
-# Install cargo plugins
-# cargo-dist: for building distributable binaries
-# cargo-watch: for auto-rebuilding on file changes
-# cargo-edit: for managing dependencies from CLI (cargo add/rm/upgrade)
-RUN cargo install cargo-dist cargo-watch cargo-edit
+# Run setup script (handles root deps and user-level rust installation)
+RUN /usr/local/bin/setup.sh --rust
 
 # Verify all tools are installed
 # Note: cargo-dist installs as 'dist', cargo-watch as 'cargo-watch', cargo-edit as 'cargo-set-version'
-RUN clippy-driver --version && \
+RUN rustc --version && \
+    cargo --version && \
+    clippy-driver --version && \
     rustfmt --version && \
     dist --version && \
     cargo-watch --version && \

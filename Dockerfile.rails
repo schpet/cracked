@@ -3,6 +3,9 @@
 # Ruby on Rails child image for cracked development environment
 # Inherits from base and adds Ruby via rbenv with Rails tooling
 # Registry: ghcr.io/schpet/cracked:rails
+#
+# Can also setup Rails directly:
+#   curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --rails
 
 ARG BASE_IMAGE=cracked:base
 FROM ${BASE_IMAGE}
@@ -10,68 +13,12 @@ FROM ${BASE_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
 LABEL org.opencontainers.image.description="Development environment with Ruby on Rails via rbenv"
 
-# Switch to root for system package installation
-USER root
-
-# Install build dependencies required for compiling Ruby and native extensions
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    autoconf \
-    bison \
-    build-essential \
-    libssl-dev \
-    libyaml-dev \
-    libreadline-dev \
-    zlib1g-dev \
-    libncurses-dev \
-    libffi-dev \
-    libgdbm-dev \
-    libdb-dev \
-    uuid-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Switch back to dev user
-USER dev
-WORKDIR /home/dev
-
 # Set up rbenv environment
 ENV RBENV_ROOT="/home/dev/.rbenv"
 ENV PATH="${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:${PATH}"
 
-# Install rbenv and ruby-build
-RUN git clone https://github.com/rbenv/rbenv.git ${RBENV_ROOT} && \
-    git clone https://github.com/rbenv/ruby-build.git ${RBENV_ROOT}/plugins/ruby-build && \
-    echo 'eval "$(rbenv init - bash)"' >> /home/dev/.bashrc
-
-# Install latest stable Ruby (4.0.0)
-ENV RUBY_VERSION="4.0.0"
-RUN rbenv install ${RUBY_VERSION} && \
-    rbenv global ${RUBY_VERSION} && \
-    rbenv rehash
-
-# Verify Ruby installation
-RUN ruby --version && gem --version
-
-# Install Ruby gems: ruby-lsp, rubyfmt, foreman, and rails
-# Note: rubyfmt is installed from source as it's a Rust-based tool
-RUN gem install ruby-lsp foreman rails --no-document
-
-# Install rubyfmt (Rust-based formatter)
-# rubyfmt provides pre-built binaries for Linux
-# Need to use sudo since we're installing to /usr/local/bin
-RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-        RUBYFMT_ARCH="x86_64"; \
-    elif [ "$ARCH" = "aarch64" ]; then \
-        RUBYFMT_ARCH="aarch64"; \
-    else \
-        echo "Unsupported architecture: $ARCH"; exit 1; \
-    fi && \
-    mkdir -p /tmp/rubyfmt && \
-    curl -fsSL "https://github.com/fables-tales/rubyfmt/releases/download/v0.11.0/rubyfmt-v0.11.0-Linux-${RUBYFMT_ARCH}.tar.gz" | \
-    tar -xz -C /tmp/rubyfmt && \
-    sudo cp /tmp/rubyfmt/tmp/releases/v0.11.0-Linux/rubyfmt /usr/local/bin/rubyfmt && \
-    sudo chmod +x /usr/local/bin/rubyfmt && \
-    rm -rf /tmp/rubyfmt
+# Run setup script (handles root deps and user-level ruby installation)
+RUN /usr/local/bin/setup.sh --rails
 
 # Verify all tools are installed
 RUN ruby --version && \

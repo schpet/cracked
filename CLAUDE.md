@@ -1,5 +1,7 @@
 # Project Instructions
 
+this computer runs out of space quickly, run df -h and clean up docker images to free up space.
+
 ## Specifications
 
 Project specs are in [docs/specs/](docs/specs/):

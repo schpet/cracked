@@ -6,6 +6,32 @@ includes a base image with my preferred cli tools (fish, jj, ripgrep, fzf, stars
 
 useful for me, published for reference.
 
+## setup script
+
+the setup script can be run directly on any linux machine to install the dev environment without docker:
+
+```bash
+# install base tools
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash
+
+# install base + specific environment
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --deno
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --rust
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --rails
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --all
+
+# update installed tools to latest versions
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --update
+```
+
+the script:
+- installs system packages via apt (requires sudo)
+- downloads CLI tools from github releases (eza, jj, just, gh, delta, sd, starship, etc)
+- installs claude code cli via npm
+- sets up dotfiles via stow
+- handles architecture detection (x86_64/aarch64)
+- skips already-installed tools unless --update is passed
+
 ## images
 
 available on github container registry:
@@ -22,7 +48,7 @@ ghcr.io/schpet/cracked:rails   # + ruby/rails environment
 build the base image:
 
 ```bash
-docker build -t cracked:base -f Dockerfile.base .
+docker build -t cracked:base .
 ```
 
 build a child image (e.g., rust):
