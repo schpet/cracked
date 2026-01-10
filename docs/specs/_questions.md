@@ -28,7 +28,7 @@ consolidated questions requiring user clarification before implementation.
 
 ### Q6: tools directory location ✅
 **feature**: deno-tools
-**answer**: ~/tools (in root user's home directory)
+**answer**: ~/tools (in dev user's home directory)
 
 ### Q7: dotfiles installation method ✅
 **feature**: dotfiles
@@ -48,7 +48,7 @@ consolidated questions requiring user clarification before implementation.
 
 ### Q11: container user ✅
 **feature**: base-image, dotfiles
-**answer**: root user (simpler for dev containers)
+**answer**: non-root `dev` user with passwordless sudo (works with Claude Code, standard devcontainer pattern)
 
 ### Q12: dockerfile naming convention ✅
 **feature**: build-ci

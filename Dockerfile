@@ -16,10 +16,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-# Create tools directory
-WORKDIR /root/tools
-
-# Install core system tools
+# Install core system tools (as root)
+# - sudo: for privilege escalation
 # - fish: modern shell (set as default)
 # - git: version control
 # - ripgrep: fast grep alternative (rg)
@@ -32,6 +30,7 @@ WORKDIR /root/tools
 # - xz-utils: xz compression (needed for tar.xz archives)
 # - nodejs/npm: required for claude code
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    sudo \
     ca-certificates \
     curl \
     fish \
@@ -47,8 +46,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
     npm \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/fdfind /usr/local/bin/fd \
-    && chsh -s /usr/bin/fish
+    && ln -s /usr/bin/fdfind /usr/local/bin/fd
+
+# Create dev user with passwordless sudo and fish shell
+RUN useradd -m -s /usr/bin/fish dev && \
+    echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Install eza (modern ls replacement) from GitHub releases
 # Not available in Debian bookworm repos
@@ -136,40 +138,50 @@ RUN SVBUMP_VERSION="1.0.0" && \
     curl -fsSL "https://github.com/schpet/svbump/releases/download/v${SVBUMP_VERSION}/svbump-${SVBUMP_ARCH}.tar.xz" \
     | tar -xJ -C /usr/local/bin --strip-components=1 svbump-${SVBUMP_ARCH}/svbump
 
-# Install Claude Code CLI
+# Install Claude Code CLI globally
 # Reference: https://github.com/anthropics/claude-code/blob/main/.devcontainer/Dockerfile
 ARG CLAUDE_CODE_VERSION=latest
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
-# Clone and install dotfiles using install.sh
+# Switch to dev user for user-specific setup
+USER dev
+WORKDIR /home/dev
+
+# Create tools directory
+RUN mkdir -p /home/dev/tools
+
+# Clone and install dotfiles using stow
 # Dotfiles provide configuration for jj, fish, git, starship, and other tools
-RUN git clone --depth 1 https://github.com/schpet/dotfiles.git /root/dotfiles && \
-    cd /root/dotfiles && \
+RUN git clone --depth 1 https://github.com/schpet/dotfiles.git /home/dev/dotfiles && \
+    cd /home/dev/dotfiles && \
     echo "=== Installing dotfiles ===" && \
-    # Backup and stow (core of install.sh, skipping apt since we have all tools)
-    mv /root/.gitconfig /root/.gitconfig.orig 2>/dev/null || true && \
-    mv /root/.zshrc /root/.zshrc.orig 2>/dev/null || true && \
-    stow . -t /root -v 2 --adopt 2>&1 && \
+    stow . -t /home/dev -v 2 --adopt 2>&1 && \
     echo "=== Symlinks created ===" && \
-    ls -la /root/.config/ && \
+    ls -la /home/dev/.config/ && \
     echo "=== Dotfiles installation complete ==="
 
 # Clone and install deno tools from GitHub
 # gogreen: run claude code in a loop to fix github CI status checks
 # easy-bead-oven: orchestrator that processes beads issues
 RUN echo "=== Installing deno tools ===" && \
-    # Clone gogreen
-    git clone --depth 1 https://github.com/schpet/gogreen.git /root/tools/gogreen && \
-    cd /root/tools/gogreen && \
+    git clone --depth 1 https://github.com/schpet/gogreen.git /home/dev/tools/gogreen && \
+    cd /home/dev/tools/gogreen && \
     just install && \
-    # Clone easy-bead-oven
-    git clone --depth 1 https://github.com/schpet/easy-bead-oven.git /root/tools/easy-bead-oven && \
-    cd /root/tools/easy-bead-oven && \
+    git clone --depth 1 https://github.com/schpet/easy-bead-oven.git /home/dev/tools/easy-bead-oven && \
+    cd /home/dev/tools/easy-bead-oven && \
     deno install -c ./deno.json -A -g -f -n ebo ./main.ts && \
     echo "=== Deno tools installation complete ==="
 
+# Install Claude Code plugins from schpet/toolbox
+RUN claude plugin marketplace add schpet/toolbox && \
+    claude plugin install jj-vcs@toolbox && \
+    claude plugin install changelog@toolbox && \
+    claude plugin install svbump@toolbox && \
+    claude plugin install chores@toolbox && \
+    claude plugin install speccer@toolbox
+
 # Add deno bin to PATH
-ENV PATH="/root/.deno/bin:${PATH}"
+ENV PATH="/home/dev/.deno/bin:${PATH}"
 
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish

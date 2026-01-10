@@ -13,7 +13,7 @@ specification complete - 24 issues ready for implementation
 - **base os**: debian/ubuntu
 - **architectures**: amd64 + arm64 (multi-arch)
 - **image naming**: variant tags (`ghcr.io/schpet/cracked:base`, `:deno`, `:rust`, `:rails`)
-- **container user**: root
+- **container user**: `dev` (non-root with passwordless sudo)
 - **tools directory**: ~/tools
 - **dotfiles**: run `install.sh` from dotfiles repo
 - **jj verification**: email = `code@schpet.com`
