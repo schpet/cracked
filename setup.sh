@@ -77,7 +77,9 @@ install_apt_packages() {
         unzip \
         xz-utils \
         nodejs \
-        npm
+        npm \
+        chromium \
+        chromium-driver
 
     # Create fd symlink if it doesn't exist
     if [[ -f /usr/bin/fdfind ]] && [[ ! -f /usr/local/bin/fd ]]; then
@@ -380,6 +382,35 @@ install_svbump() {
     log_success "svbump $version installed"
 }
 
+# Install neovim
+install_neovim() {
+    local current_version=""
+    if has_cmd nvim; then
+        current_version=$(nvim --version | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+    fi
+
+    local latest_tag
+    latest_tag=$(get_latest_release "neovim/neovim")
+    local version="${latest_tag#v}"
+
+    if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
+        log_success "neovim $current_version already installed (latest)"
+        return
+    fi
+
+    log_info "Installing neovim $version..."
+    local nvim_arch
+    case "$ARCH" in
+        x86_64)  nvim_arch="linux-x86_64" ;;
+        aarch64) nvim_arch="linux-arm64" ;;
+        *) log_error "Unsupported architecture: $ARCH"; return 1 ;;
+    esac
+
+    curl -fsSL "https://github.com/neovim/neovim/releases/download/${latest_tag}/nvim-${nvim_arch}.tar.gz" \
+        | $SUDO tar -xz -C /usr/local --strip-components=1
+    log_success "neovim $version installed"
+}
+
 # Install Claude Code CLI
 install_claude_code() {
     log_info "Installing/updating Claude Code CLI..."
@@ -626,6 +657,7 @@ install_base() {
     install_starship
     install_changelog
     install_svbump
+    install_neovim
 
     # Claude Code
     if has_cmd npm; then
