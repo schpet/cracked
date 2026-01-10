@@ -10,6 +10,9 @@ FROM ${BASE_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
 LABEL org.opencontainers.image.description="Development environment with Rust toolchain and cargo ecosystem"
 
+# Switch to root for system package installation
+USER root
+
 # Install build dependencies required for compiling Rust packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -17,10 +20,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Switch back to dev user
+USER dev
+WORKDIR /home/dev
+
 # Install Rust using rustup (official installer)
 # This handles architecture detection automatically
-ENV RUSTUP_HOME="/root/.rustup"
-ENV CARGO_HOME="/root/.cargo"
+ENV RUSTUP_HOME="/home/dev/.rustup"
+ENV CARGO_HOME="/home/dev/.cargo"
 ENV PATH="${CARGO_HOME}/bin:${PATH}"
 
 # Install Rust stable toolchain with components
@@ -46,4 +53,4 @@ RUN clippy-driver --version && \
     cargo-watch --version && \
     cargo set-version --version
 
-CMD ["/bin/bash"]
+CMD ["/usr/bin/fish"]

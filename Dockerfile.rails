@@ -10,6 +10,9 @@ FROM ${BASE_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
 LABEL org.opencontainers.image.description="Development environment with Ruby on Rails via rbenv"
 
+# Switch to root for system package installation
+USER root
+
 # Install build dependencies required for compiling Ruby and native extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf \
@@ -26,14 +29,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     uuid-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Switch back to dev user
+USER dev
+WORKDIR /home/dev
+
 # Set up rbenv environment
-ENV RBENV_ROOT="/root/.rbenv"
+ENV RBENV_ROOT="/home/dev/.rbenv"
 ENV PATH="${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:${PATH}"
 
 # Install rbenv and ruby-build
 RUN git clone https://github.com/rbenv/rbenv.git ${RBENV_ROOT} && \
     git clone https://github.com/rbenv/ruby-build.git ${RBENV_ROOT}/plugins/ruby-build && \
-    echo 'eval "$(rbenv init - bash)"' >> /root/.bashrc
+    echo 'eval "$(rbenv init - bash)"' >> /home/dev/.bashrc
 
 # Install latest stable Ruby (4.0.0)
 ENV RUBY_VERSION="4.0.0"
@@ -50,6 +57,7 @@ RUN gem install ruby-lsp foreman rails --no-document
 
 # Install rubyfmt (Rust-based formatter)
 # rubyfmt provides pre-built binaries for Linux
+# Need to use sudo since we're installing to /usr/local/bin
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         RUBYFMT_ARCH="x86_64"; \
@@ -61,8 +69,8 @@ RUN ARCH=$(uname -m) && \
     mkdir -p /tmp/rubyfmt && \
     curl -fsSL "https://github.com/fables-tales/rubyfmt/releases/download/v0.11.0/rubyfmt-v0.11.0-Linux-${RUBYFMT_ARCH}.tar.gz" | \
     tar -xz -C /tmp/rubyfmt && \
-    cp /tmp/rubyfmt/tmp/releases/v0.11.0-Linux/rubyfmt /usr/local/bin/rubyfmt && \
-    chmod +x /usr/local/bin/rubyfmt && \
+    sudo cp /tmp/rubyfmt/tmp/releases/v0.11.0-Linux/rubyfmt /usr/local/bin/rubyfmt && \
+    sudo chmod +x /usr/local/bin/rubyfmt && \
     rm -rf /tmp/rubyfmt
 
 # Verify all tools are installed
@@ -74,4 +82,4 @@ RUN ruby --version && \
     ruby-lsp --version && \
     rubyfmt --version
 
-CMD ["/bin/bash"]
+CMD ["/usr/bin/fish"]
