@@ -427,11 +427,13 @@ install_claude_plugins() {
 
     log_info "Installing Claude Code plugins..."
     claude plugin marketplace add schpet/toolbox || true
+    claude plugin marketplace add anthropics/claude-plugins-official || true
     claude plugin install jj-vcs@toolbox || true
     claude plugin install changelog@toolbox || true
     claude plugin install svbump@toolbox || true
     claude plugin install chores@toolbox || true
     claude plugin install speccer@toolbox || true
+    claude plugin install ralph-loop@claude-plugins-official || true
 
     log_info "Configuring MCP servers..."
     claude mcp add chrome-devtools npx chrome-devtools-mcp@latest || true
