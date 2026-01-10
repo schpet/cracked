@@ -30,6 +30,7 @@ WORKDIR /root/tools
 # - jo: JSON output generator
 # - unzip: archive extraction (needed for deno install)
 # - xz-utils: xz compression (needed for tar.xz archives)
+# - nodejs/npm: required for claude code
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -43,8 +44,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jo \
     unzip \
     xz-utils \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/fdfind /usr/local/bin/fd
+    && ln -s /usr/bin/fdfind /usr/local/bin/fd \
+    && chsh -s /usr/bin/fish
 
 # Install eza (modern ls replacement) from GitHub releases
 # Not available in Debian bookworm repos
@@ -131,6 +135,11 @@ RUN SVBUMP_VERSION="1.0.0" && \
     if [ "$ARCH" = "aarch64" ]; then SVBUMP_ARCH="aarch64-unknown-linux-gnu"; fi && \
     curl -fsSL "https://github.com/schpet/svbump/releases/download/v${SVBUMP_VERSION}/svbump-${SVBUMP_ARCH}.tar.xz" \
     | tar -xJ -C /usr/local/bin --strip-components=1 svbump-${SVBUMP_ARCH}/svbump
+
+# Install Claude Code CLI
+# Reference: https://github.com/anthropics/claude-code/blob/main/.devcontainer/Dockerfile
+ARG CLAUDE_CODE_VERSION=latest
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 # Clone and install dotfiles using install.sh
 # Dotfiles provide configuration for jj, fish, git, starship, and other tools
