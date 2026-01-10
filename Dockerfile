@@ -20,6 +20,7 @@ ENV LC_ALL=C.UTF-8
 # - sudo: for privilege escalation
 # - fish: modern shell (set as default)
 # - git: version control
+# - openssh-client: ssh client for remote connections
 # - ripgrep: fast grep alternative (rg)
 # - fd-find: fast find alternative (creates fdfind, symlinked to fd)
 # - fzf: fuzzy finder
@@ -35,6 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     fish \
     git \
+    openssh-client \
     ripgrep \
     fd-find \
     fzf \
