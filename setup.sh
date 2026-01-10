@@ -432,7 +432,10 @@ install_claude_plugins() {
     claude plugin install svbump@toolbox || true
     claude plugin install chores@toolbox || true
     claude plugin install speccer@toolbox || true
-    log_success "Claude Code plugins installed"
+
+    log_info "Configuring MCP servers..."
+    claude mcp add chrome-devtools npx chrome-devtools-mcp@latest || true
+    log_success "Claude Code plugins and MCP servers configured"
 }
 
 # Install dotfiles
