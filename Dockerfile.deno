@@ -13,12 +13,12 @@ FROM ${BASE_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
 LABEL org.opencontainers.image.description="Development environment with Deno runtime"
 
-# Switch back to dev user
-USER dev
-WORKDIR /home/dev
+# Switch back to exedev user
+USER exedev
+WORKDIR /home/exedev
 
 # Install Deno via setup script (user-local installation)
-ENV DENO_INSTALL="/home/dev/.deno"
+ENV DENO_INSTALL="/home/exedev/.deno"
 ENV PATH="${DENO_INSTALL}/bin:${PATH}"
 
 RUN /usr/local/bin/setup.sh --deno

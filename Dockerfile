@@ -26,9 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create dev user with passwordless sudo and fish shell (fish installed by setup.sh)
-RUN useradd -m -s /bin/bash dev && \
-    echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Create exedev user with passwordless sudo (exe.dev expects this username for SSH)
+RUN useradd -m -s /bin/bash exedev && \
+    echo "exedev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Copy setup script
 COPY setup.sh /usr/local/bin/setup.sh
@@ -37,35 +37,35 @@ RUN chmod +x /usr/local/bin/setup.sh
 # Run setup script as root for system-level installations
 RUN /usr/local/bin/setup.sh --base
 
-# Change dev user's shell to fish (now that it's installed)
-RUN chsh -s /usr/bin/fish dev
+# Change exedev user's shell to fish (now that it's installed)
+RUN chsh -s /usr/bin/fish exedev
 
-# Switch to dev user for user-specific setup
-USER dev
-WORKDIR /home/dev
+# Switch to exedev user for user-specific setup
+USER exedev
+WORKDIR /home/exedev
 
 # Create tools directory
-RUN mkdir -p /home/dev/tools
+RUN mkdir -p /home/exedev/tools
 
 # Clone and install dotfiles using stow
 # Dotfiles provide configuration for jj, fish, git, starship, and other tools
-RUN git clone --depth 1 https://github.com/schpet/dotfiles.git /home/dev/dotfiles && \
-    cd /home/dev/dotfiles && \
+RUN git clone --depth 1 https://github.com/schpet/dotfiles.git /home/exedev/dotfiles && \
+    cd /home/exedev/dotfiles && \
     echo "=== Installing dotfiles ===" && \
-    stow . -t /home/dev -v 2 --adopt 2>&1 && \
+    stow . -t /home/exedev -v 2 --adopt 2>&1 && \
     echo "=== Symlinks created ===" && \
-    ls -la /home/dev/.config/ && \
+    ls -la /home/exedev/.config/ && \
     echo "=== Dotfiles installation complete ==="
 
 # Clone and install deno tools from GitHub
 # gogreen: run claude code in a loop to fix github CI status checks
 # easy-bead-oven: orchestrator that processes beads issues
 RUN echo "=== Installing deno tools ===" && \
-    git clone --depth 1 https://github.com/schpet/gogreen.git /home/dev/tools/gogreen && \
-    cd /home/dev/tools/gogreen && \
+    git clone --depth 1 https://github.com/schpet/gogreen.git /home/exedev/tools/gogreen && \
+    cd /home/exedev/tools/gogreen && \
     just install && \
-    git clone --depth 1 https://github.com/schpet/easy-bead-oven.git /home/dev/tools/easy-bead-oven && \
-    cd /home/dev/tools/easy-bead-oven && \
+    git clone --depth 1 https://github.com/schpet/easy-bead-oven.git /home/exedev/tools/easy-bead-oven && \
+    cd /home/exedev/tools/easy-bead-oven && \
     deno install -c ./deno.json -A -g -f -n ebo ./main.ts && \
     echo "=== Deno tools installation complete ==="
 
@@ -78,7 +78,7 @@ RUN claude plugin marketplace add schpet/toolbox && \
     claude plugin install speccer@toolbox
 
 # Add deno bin to PATH
-ENV PATH="/home/dev/.deno/bin:${PATH}"
+ENV PATH="/home/exedev/.deno/bin:${PATH}"
 
 # Set fish as default shell
 ENV SHELL=/usr/bin/fish
