@@ -78,6 +78,7 @@ install_apt_packages() {
         xz-utils \
         nodejs \
         npm \
+        tmux \
         chromium \
         chromium-driver
 
