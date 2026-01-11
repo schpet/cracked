@@ -436,7 +436,8 @@ install_claude_plugins() {
     claude plugin install ralph-loop@claude-plugins-official || true
 
     log_info "Configuring MCP servers..."
-    claude mcp add chrome-devtools npx chrome-devtools-mcp@latest || true
+    # Use --scope user for global config, --headless --isolated for headless Linux servers
+    claude mcp add --scope user chrome-devtools -- npx chrome-devtools-mcp@latest --headless --isolated || true
     log_success "Claude Code plugins and MCP servers configured"
 }
 
