@@ -1,14 +1,16 @@
 # cracked
 
-github repo with dockerfiles for dev.
+dev environment setup script and container images.
 
-includes a base image with my preferred cli tools (fish, jj, ripgrep, fzf, starship, etc) plus derivative images for deno, rust, and rails. dotfiles are baked in via stow.
+## quick start
 
-useful for me, published for reference.
+```bash
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash
+```
 
-## setup script
+this installs my preferred cli tools (fish, jj, ripgrep, fzf, starship, eza, etc) plus claude code and dotfiles on any linux machine.
 
-the setup script can be run directly on any linux machine to install the dev environment without docker:
+## setup script options
 
 ```bash
 # install base tools
@@ -48,7 +50,7 @@ ghcr.io/schpet/cracked:rails   # + ruby/rails environment
 create a new machine with the latest tag:
 
 ```bash
-ssh exe.dev new --name "cracked-$(gh api repos/schpet/cracked/tags --jq '.[0].name')" --image "ghcr.io/schpet/cracked:$(gh api repos/schpet/cracked/tags --jq '.[0].name')" --json
+ssh exe.dev new --image "ghcr.io/schpet/cracked:$(gh api repos/schpet/cracked/tags --jq '.[0].name')" --json
 ```
 
 ## building locally
