@@ -156,7 +156,7 @@ verify_version() {
                 tags_to_check+=("${version}-${v}" "$v")
             else
                 echo -e "${YELLOW}⊘${NC} Skipping ${v} (Dockerfile.${v} not found)"
-                ((skipped++))
+                ((++skipped))
             fi
         done
     fi
@@ -167,10 +167,10 @@ verify_version() {
     for tag in "${tags_to_check[@]}"; do
         if echo "$all_tags" | grep -qx "$tag"; then
             echo -e "${GREEN}✓${NC} ${tag}"
-            ((passed++))
+            ((++passed))
         else
             echo -e "${RED}✗${NC} ${tag} - NOT FOUND"
-            ((failed++))
+            ((++failed))
         fi
     done
 
