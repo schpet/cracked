@@ -43,6 +43,14 @@ ghcr.io/schpet/cracked:rust    # + rust toolchain
 ghcr.io/schpet/cracked:rails   # + ruby/rails environment
 ```
 
+## exe.dev
+
+create a new machine with the latest tag:
+
+```fish
+ssh exe.dev new --name "cracked-(gh api repos/schpet/cracked/tags --jq '.[0].name')" --image "ghcr.io/schpet/cracked:(gh api repos/schpet/cracked/tags --jq '.[0].name')" --json
+```
+
 ## building locally
 
 build the base image:
