@@ -20,13 +20,13 @@ ENV PATH="${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:${PATH}"
 # Run setup script (handles root deps and user-level ruby installation)
 RUN /usr/local/bin/setup.sh --rails
 
-# Verify all tools are installed
+# Verify all tools are installed (rubyfmt optional - may fail on some architectures)
 RUN ruby --version && \
     gem --version && \
     rbenv --version && \
     rails --version && \
     foreman version && \
     ruby-lsp --version && \
-    rubyfmt --version
+    (rubyfmt --version || echo "rubyfmt not available on this architecture")
 
 CMD ["/usr/bin/fish"]
