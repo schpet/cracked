@@ -60,8 +60,9 @@ get_latest_release() {
 # Install system packages via apt
 install_apt_packages() {
     log_info "Installing system packages..."
+    export DEBIAN_FRONTEND=noninteractive
     $SUDO apt-get update
-    $SUDO apt-get install -y --no-install-recommends \
+    $SUDO apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y --no-install-recommends \
         sudo \
         ca-certificates \
         curl \
@@ -523,8 +524,9 @@ setup_rust_env() {
     log_info "Setting up Rust environment..."
 
     # Install build dependencies
+    export DEBIAN_FRONTEND=noninteractive
     $SUDO apt-get update
-    $SUDO apt-get install -y --no-install-recommends \
+    $SUDO apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y --no-install-recommends \
         build-essential \
         pkg-config \
         libssl-dev
@@ -561,8 +563,9 @@ setup_rails_env() {
     log_info "Setting up Ruby on Rails environment..."
 
     # Install build dependencies
+    export DEBIAN_FRONTEND=noninteractive
     $SUDO apt-get update
-    $SUDO apt-get install -y --no-install-recommends \
+    $SUDO apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y --no-install-recommends \
         autoconf \
         bison \
         build-essential \
