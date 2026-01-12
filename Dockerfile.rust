@@ -15,8 +15,8 @@ LABEL org.opencontainers.image.description="Development environment with Rust to
 
 # Install Rust using rustup (official installer)
 # This handles architecture detection automatically
-ENV RUSTUP_HOME="/home/exedev/.rustup"
-ENV CARGO_HOME="/home/exedev/.cargo"
+ENV RUSTUP_HOME="/home/dev/.rustup"
+ENV CARGO_HOME="/home/dev/.cargo"
 ENV PATH="${CARGO_HOME}/bin:${PATH}"
 
 # Run setup script (handles root deps and user-level rust installation)

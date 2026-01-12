@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.source="https://github.com/schpet/cracked"
 LABEL org.opencontainers.image.description="Development environment with Ruby on Rails via rbenv"
 
 # Set up rbenv environment
-ENV RBENV_ROOT="/home/exedev/.rbenv"
+ENV RBENV_ROOT="/home/dev/.rbenv"
 ENV PATH="${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:${PATH}"
 
 # Run setup script (handles root deps and user-level ruby installation)
