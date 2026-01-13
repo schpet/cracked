@@ -384,6 +384,66 @@ install_svbump() {
     log_success "svbump $version installed"
 }
 
+# Install atuin (shell history)
+install_atuin() {
+    local current_version=""
+    if has_cmd atuin; then
+        current_version=$(atuin --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+    fi
+
+    local latest_tag
+    latest_tag=$(get_latest_release "atuinsh/atuin")
+    local version="${latest_tag#v}"
+
+    if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
+        log_success "atuin $current_version already installed (latest)"
+        return
+    fi
+
+    log_info "Installing atuin $version..."
+    local atuin_arch
+    case "$ARCH" in
+        x86_64)  atuin_arch="x86_64-unknown-linux-gnu" ;;
+        aarch64) atuin_arch="aarch64-unknown-linux-gnu" ;;
+        *) log_error "Unsupported architecture: $ARCH"; return 1 ;;
+    esac
+
+    curl -fsSL "https://github.com/atuinsh/atuin/releases/download/${latest_tag}/atuin-${atuin_arch}.tar.gz" \
+        | $SUDO tar -xz -C /usr/local/bin --strip-components=1 "atuin-${atuin_arch}/atuin"
+    log_success "atuin $version installed"
+}
+
+# Install direnv
+install_direnv() {
+    local current_version=""
+    if has_cmd direnv; then
+        current_version=$(direnv --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+    fi
+
+    local latest_tag
+    latest_tag=$(get_latest_release "direnv/direnv")
+    local version="${latest_tag#v}"
+
+    if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
+        log_success "direnv $current_version already installed (latest)"
+        return
+    fi
+
+    log_info "Installing direnv $version..."
+    local direnv_arch
+    case "$ARCH" in
+        x86_64)  direnv_arch="linux-amd64" ;;
+        aarch64) direnv_arch="linux-arm64" ;;
+        *) log_error "Unsupported architecture: $ARCH"; return 1 ;;
+    esac
+
+    curl -fsSL "https://github.com/direnv/direnv/releases/download/${latest_tag}/direnv.${direnv_arch}" \
+        -o /tmp/direnv
+    $SUDO install -m 755 /tmp/direnv /usr/local/bin/direnv
+    rm /tmp/direnv
+    log_success "direnv $version installed"
+}
+
 # Install neovim
 install_neovim() {
     local current_version=""
@@ -667,6 +727,8 @@ install_base() {
     install_starship
     install_changelog
     install_svbump
+    install_atuin
+    install_direnv
     install_neovim
 
     # Claude Code
