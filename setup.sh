@@ -54,7 +54,17 @@ has_cmd() { command -v "$1" &> /dev/null; }
 # Get latest GitHub release tag for a repo
 get_latest_release() {
     local repo="$1"
-    curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'
+    local auth_header=""
+    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        auth_header="-H \"Authorization: token $GITHUB_TOKEN\""
+    fi
+    local result
+    result=$(curl -fsSL $auth_header "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    if [[ -z "$result" ]]; then
+        log_warn "Could not fetch latest release for $repo (rate limited?). Skipping..."
+        return 1
+    fi
+    echo "$result"
 }
 
 # Install system packages via apt
@@ -200,7 +210,7 @@ install_eza() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "eza-community/eza")
+    latest_tag=$(get_latest_release "eza-community/eza") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$latest_tag" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -229,7 +239,7 @@ install_jj() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "jj-vcs/jj")
+    latest_tag=$(get_latest_release "jj-vcs/jj") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -258,7 +268,7 @@ install_deno() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "denoland/deno")
+    latest_tag=$(get_latest_release "denoland/deno") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -291,7 +301,7 @@ install_just() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "casey/just")
+    latest_tag=$(get_latest_release "casey/just") || return 0
     local version="${latest_tag}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -320,7 +330,7 @@ install_gh() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "cli/cli")
+    latest_tag=$(get_latest_release "cli/cli") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -349,7 +359,7 @@ install_delta() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "dandavison/delta")
+    latest_tag=$(get_latest_release "dandavison/delta") || return 0
     local version="${latest_tag}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -378,7 +388,7 @@ install_sd() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "chmln/sd")
+    latest_tag=$(get_latest_release "chmln/sd") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -407,7 +417,7 @@ install_starship() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "starship/starship")
+    latest_tag=$(get_latest_release "starship/starship") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -436,7 +446,7 @@ install_changelog() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "schpet/changelog")
+    latest_tag=$(get_latest_release "schpet/changelog") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -465,7 +475,7 @@ install_svbump() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "schpet/svbump")
+    latest_tag=$(get_latest_release "schpet/svbump") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -494,7 +504,7 @@ install_atuin() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "atuinsh/atuin")
+    latest_tag=$(get_latest_release "atuinsh/atuin") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -523,7 +533,7 @@ install_direnv() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "direnv/direnv")
+    latest_tag=$(get_latest_release "direnv/direnv") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -554,7 +564,7 @@ install_neovim() {
     fi
 
     local latest_tag
-    latest_tag=$(get_latest_release "neovim/neovim")
+    latest_tag=$(get_latest_release "neovim/neovim") || return 0
     local version="${latest_tag#v}"
 
     if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
@@ -793,7 +803,13 @@ setup_rails_env() {
     esac
 
     local latest_rubyfmt
-    latest_rubyfmt=$(get_latest_release "fables-tales/rubyfmt")
+    if ! latest_rubyfmt=$(get_latest_release "fables-tales/rubyfmt"); then
+        log_warn "Could not fetch rubyfmt release, skipping"
+        log_success "Ruby on Rails environment ready"
+        ruby --version
+        rails --version || log_warn "Rails not fully configured yet"
+        return
+    fi
 
     local tmpdir
     tmpdir=$(mktemp -d)
