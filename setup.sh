@@ -761,13 +761,17 @@ setup_rails_env() {
         git clone https://github.com/rbenv/ruby-build.git "${RBENV_ROOT}/plugins/ruby-build"
     fi
 
-    # Get latest stable Ruby version
+    # Get Ruby version (use provided version or detect latest)
     local ruby_version
-    ruby_version=$("${RBENV_ROOT}/plugins/ruby-build/bin/ruby-build" --definitions | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | tail -1)
-
-    if [[ -z "$ruby_version" ]]; then
-        ruby_version="3.3.0"
-        log_warn "Could not detect latest Ruby, using $ruby_version"
+    if [[ -n "$RUBY_VERSION" ]]; then
+        ruby_version="$RUBY_VERSION"
+        log_info "Using specified Ruby version: $ruby_version"
+    else
+        ruby_version=$("${RBENV_ROOT}/plugins/ruby-build/bin/ruby-build" --definitions | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | tail -1)
+        if [[ -z "$ruby_version" ]]; then
+            ruby_version="3.3.0"
+            log_warn "Could not detect latest Ruby, using $ruby_version"
+        fi
     fi
 
     log_info "Installing Ruby $ruby_version..."
@@ -862,6 +866,7 @@ INSTALL_DENO=false
 INSTALL_RUST=false
 INSTALL_RAILS=false
 UPDATE_MODE=false
+RUBY_VERSION=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -880,6 +885,10 @@ while [[ $# -gt 0 ]]; do
         --rails)
             INSTALL_RAILS=true
             shift
+            ;;
+        --ruby-version)
+            RUBY_VERSION="$2"
+            shift 2
             ;;
         --all)
             INSTALL_DENO=true
@@ -901,13 +910,14 @@ while [[ $# -gt 0 ]]; do
             echo "  ./setup.sh [OPTIONS]"
             echo ""
             echo "Options:"
-            echo "  --base   Install base tools only (default)"
-            echo "  --deno   Install base + Deno environment"
-            echo "  --rust   Install base + Rust toolchain"
-            echo "  --rails  Install base + Ruby on Rails"
-            echo "  --all    Install everything"
-            echo "  --update Force update of already installed tools"
-            echo "  --help   Show this help message"
+            echo "  --base           Install base tools only (default)"
+            echo "  --deno           Install base + Deno environment"
+            echo "  --rust           Install base + Rust toolchain"
+            echo "  --rails          Install base + Ruby on Rails"
+            echo "  --ruby-version   Ruby version to install (e.g., 3.4.1), used with --rails"
+            echo "  --all            Install everything"
+            echo "  --update         Force update of already installed tools"
+            echo "  --help           Show this help message"
             exit 0
             ;;
         *)

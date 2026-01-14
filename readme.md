@@ -20,6 +20,7 @@ curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash
 curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --deno
 curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --rust
 curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --rails
+curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --rails --ruby-version 3.4.1
 curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash -s -- --all
 
 # update installed tools to latest versions
