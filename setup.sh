@@ -87,6 +87,20 @@ install_apt_packages() {
     if [[ -f /usr/bin/fdfind ]] && [[ ! -f /usr/local/bin/fd ]]; then
         $SUDO ln -sf /usr/bin/fdfind /usr/local/bin/fd
     fi
+
+    # Set fish as default shell
+    if has_cmd fish; then
+        local fish_path
+        fish_path=$(command -v fish)
+        local current_shell
+        current_shell=$(getent passwd "$USER" | cut -d: -f7)
+        if [[ "$current_shell" != "$fish_path" ]]; then
+            log_info "Setting fish as default shell..."
+            $SUDO chsh -s "$fish_path" "$USER"
+            log_success "Fish set as default shell"
+        fi
+    fi
+
     log_success "System packages installed"
 }
 
