@@ -578,7 +578,7 @@ install_neovim() {
 # Install Claude Code CLI
 install_claude_code() {
     log_info "Installing/updating Claude Code CLI..."
-    $SUDO npm install -g @anthropic-ai/claude-code@latest
+    $SUDO npm install -g --force @anthropic-ai/claude-code@latest || log_warn "Claude Code install had issues"
     log_success "Claude Code CLI installed"
 }
 
