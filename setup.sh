@@ -577,8 +577,12 @@ install_neovim() {
 
 # Install Claude Code CLI
 install_claude_code() {
-    log_info "Installing/updating Claude Code CLI..."
-    $SUDO npm install -g --force @anthropic-ai/claude-code@latest || log_warn "Claude Code install had issues"
+    if has_cmd claude; then
+        log_success "Claude Code already installed (run 'claude update' to update)"
+        return
+    fi
+    log_info "Installing Claude Code CLI..."
+    $SUDO npm install -g @anthropic-ai/claude-code@latest || log_warn "Claude Code install had issues"
     log_success "Claude Code CLI installed"
 }
 
@@ -952,6 +956,7 @@ main() {
     echo "Next steps:"
     echo "  1. Restart your shell or run: source ~/.bashrc"
     echo "  2. If using fish, it should work immediately"
+    echo "  3. To update Claude Code: claude update"
     echo ""
 }
 
