@@ -788,6 +788,18 @@ setup_rails_env() {
         git clone https://github.com/rbenv/ruby-build.git "${RBENV_ROOT}/plugins/ruby-build"
     fi
 
+    # Add rbenv to fish PATH if fish is installed
+    if has_cmd fish; then
+        local fish_config_dir="${HOME}/.config/fish/conf.d"
+        mkdir -p "$fish_config_dir"
+        cat > "${fish_config_dir}/rbenv.fish" <<'FISHCONFIG'
+# rbenv setup
+set -gx RBENV_ROOT $HOME/.rbenv
+fish_add_path -g $RBENV_ROOT/bin $RBENV_ROOT/shims
+FISHCONFIG
+        log_info "Added rbenv to fish PATH"
+    fi
+
     # Get Ruby version (use provided version or detect latest)
     local ruby_version
     if [[ -n "$RUBY_VERSION" ]]; then
