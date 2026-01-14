@@ -672,6 +672,23 @@ install_deno_tools() {
     log_success "Deno tools installed"
 }
 
+# Clone cracked repo for easy development
+install_cracked_repo() {
+    local tools_dir="${HOME}/tools"
+    mkdir -p "$tools_dir"
+
+    local cracked_dir="${tools_dir}/cracked"
+    if [[ -d "$cracked_dir" ]]; then
+        log_info "Updating cracked repo..."
+        cd "$cracked_dir"
+        git pull --ff-only || log_warn "Could not update cracked"
+    else
+        log_info "Cloning cracked repo..."
+        git clone --depth 1 https://github.com/schpet/cracked.git "$cracked_dir"
+    fi
+    log_success "Cracked repo available at ~/tools/cracked"
+}
+
 # ============================================================================
 # Language-specific environments
 # ============================================================================
@@ -865,9 +882,10 @@ install_base() {
         log_warn "npm not found, skipping Claude Code"
     fi
 
-    # User-level setup (dotfiles, deno tools)
+    # User-level setup (dotfiles, deno tools, cracked repo)
     if [[ $EUID -ne 0 ]]; then
         install_dotfiles
+        install_cracked_repo
         if has_cmd deno && has_cmd just; then
             install_deno_tools
         fi
