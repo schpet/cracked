@@ -1009,10 +1009,14 @@ main() {
     echo ""
     log_success "=== All installations complete ==="
     echo ""
-    echo "Next steps:"
-    echo "  1. Restart your shell or run: source ~/.bashrc"
-    echo "  2. If using fish, it should work immediately"
-    echo "  3. To update Claude Code: claude update"
+    echo "To apply changes, restart your shell:"
+    echo ""
+    echo "  exec fish"
+    echo ""
+    echo "Or start a new terminal session."
+    echo ""
+    echo "Other commands:"
+    echo "  claude update    Update Claude Code"
     echo ""
 }
 
