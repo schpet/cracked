@@ -604,18 +604,18 @@ install_claude_plugins() {
     fi
 
     log_info "Installing Claude Code plugins..."
-    claude plugin marketplace add schpet/toolbox || true
-    claude plugin marketplace add anthropics/claude-plugins-official || true
-    claude plugin install jj-vcs@toolbox || true
-    claude plugin install changelog@toolbox || true
-    claude plugin install svbump@toolbox || true
-    claude plugin install chores@toolbox || true
-    claude plugin install speccer@toolbox || true
-    claude plugin install ralph-loop@claude-plugins-official || true
+    claude plugin marketplace add schpet/toolbox 2>/dev/null || true
+    claude plugin marketplace add anthropics/claude-plugins-official 2>/dev/null || true
+    claude plugin install jj-vcs@toolbox 2>/dev/null || true
+    claude plugin install changelog@toolbox 2>/dev/null || true
+    claude plugin install svbump@toolbox 2>/dev/null || true
+    claude plugin install chores@toolbox 2>/dev/null || true
+    claude plugin install speccer@toolbox 2>/dev/null || true
+    claude plugin install ralph-loop@claude-plugins-official 2>/dev/null || true
 
     log_info "Configuring MCP servers..."
     # Use --scope user for global config, --headless --isolated for headless Linux servers
-    claude mcp add --scope user chrome-devtools -- npx chrome-devtools-mcp@latest --headless --isolated || true
+    claude mcp add --scope user chrome-devtools -- npx chrome-devtools-mcp@latest --headless --isolated 2>/dev/null || true
     log_success "Claude Code plugins and MCP servers configured"
 }
 
