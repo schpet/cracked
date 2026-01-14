@@ -190,11 +190,13 @@ TERMINFO
     if has_cmd fish; then
         local fish_path
         fish_path=$(command -v fish)
+        local current_user
+        current_user=$(whoami)
         local current_shell
-        current_shell=$(getent passwd "$USER" | cut -d: -f7)
+        current_shell=$(getent passwd "$current_user" | cut -d: -f7)
         if [[ "$current_shell" != "$fish_path" ]]; then
             log_info "Setting fish as default shell..."
-            $SUDO chsh -s "$fish_path" "$USER"
+            $SUDO chsh -s "$fish_path" "$current_user"
             log_success "Fish set as default shell"
         fi
     fi
@@ -556,6 +558,69 @@ install_direnv() {
     log_success "direnv $version installed"
 }
 
+# Install fnm (Fast Node Manager)
+install_fnm() {
+    local current_version=""
+    if has_cmd fnm; then
+        current_version=$(fnm --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+    fi
+
+    local latest_tag
+    latest_tag=$(get_latest_release "Schniz/fnm") || return 0
+    local version="${latest_tag#v}"
+
+    if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
+        log_success "fnm $current_version already installed (latest)"
+        return
+    fi
+
+    log_info "Installing fnm $version..."
+    local fnm_arch
+    case "$ARCH" in
+        x86_64)  fnm_arch="linux" ;;
+        aarch64) fnm_arch="arm64" ;;
+        *) log_error "Unsupported architecture: $ARCH"; return 1 ;;
+    esac
+
+    local tmpfile
+    tmpfile=$(mktemp)
+    curl -fsSL "https://github.com/Schniz/fnm/releases/download/${latest_tag}/fnm-${fnm_arch}.zip" -o "$tmpfile"
+    $SUDO unzip -q -o "$tmpfile" -d /usr/local/bin
+    rm "$tmpfile"
+    $SUDO chmod +x /usr/local/bin/fnm
+    log_success "fnm $version installed"
+
+    # Add fnm to fish PATH if fish is installed
+    if has_cmd fish; then
+        local fish_config_dir="${HOME}/.config/fish/conf.d"
+        mkdir -p "$fish_config_dir"
+        cat > "${fish_config_dir}/fnm.fish" <<'FISHCONFIG'
+# fnm (Fast Node Manager) setup
+set -gx FNM_DIR $HOME/.local/share/fnm
+if type -q fnm
+    fnm env --use-on-cd --shell fish | source
+end
+FISHCONFIG
+        log_info "Added fnm to fish config"
+    fi
+
+    # Set up fnm directories and install Node.js LTS
+    export FNM_DIR="${HOME}/.local/share/fnm"
+    mkdir -p "$FNM_DIR"
+
+    # Initialize fnm for current shell
+    eval "$(fnm env --shell bash)"
+
+    if ! fnm list 2>/dev/null | grep -q "lts"; then
+        log_info "Installing Node.js LTS via fnm..."
+        fnm install --lts
+        fnm default lts-latest
+        log_success "Node.js LTS installed"
+    else
+        log_success "Node.js LTS already installed"
+    fi
+}
+
 # Install neovim
 install_neovim() {
     local current_version=""
@@ -884,6 +949,7 @@ install_base() {
     install_svbump
     install_atuin
     install_direnv
+    install_fnm
     install_neovim
 
     # Claude Code
