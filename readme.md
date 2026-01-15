@@ -8,7 +8,7 @@ dev environment setup script and container images.
 curl -fsSL https://raw.githubusercontent.com/schpet/cracked/main/setup.sh | bash
 ```
 
-this installs my preferred cli tools (fish, jj, ripgrep, fzf, starship, eza, etc) plus claude code and dotfiles on any linux machine.
+this installs my preferred cli tools (fish, jj, ripgrep, fzf, starship, eza, zellij, etc) plus claude code and dotfiles on any linux machine.
 
 ## setup script options
 
@@ -192,3 +192,81 @@ gh auth status
 - wait a few minutes for registry propagation
 - check workflow completed successfully: `gh run list`
 - verify package visibility settings in repo settings
+
+## zellij cheatsheet
+
+[zellij](https://zellij.dev) is a terminal multiplexer (like tmux). all commands use `Ctrl+<key>` to enter a mode, then a single key to act.
+
+### modes
+
+| key | mode | purpose |
+|-----|------|---------|
+| `Ctrl+p` | pane | manage panes |
+| `Ctrl+t` | tab | manage tabs |
+| `Ctrl+n` | resize | resize panes |
+| `Ctrl+h` | move | move panes |
+| `Ctrl+s` | scroll | scroll/search |
+| `Ctrl+o` | session | session management |
+| `Ctrl+q` | quit | exit zellij |
+
+### pane mode (`Ctrl+p`)
+
+| key | action |
+|-----|--------|
+| `n` | new pane (split right) |
+| `d` | new pane down |
+| `r` | new pane right |
+| `x` | close pane |
+| `f` | fullscreen toggle |
+| `w` | floating pane toggle |
+| `e` | embed floating pane |
+| `c` | rename pane |
+| `←↓↑→` or `hjkl` | move focus |
+
+### tab mode (`Ctrl+t`)
+
+| key | action |
+|-----|--------|
+| `n` | new tab |
+| `x` | close tab |
+| `r` | rename tab |
+| `←→` or `hl` | switch tabs |
+| `1-9` | go to tab N |
+| `s` | sync panes (type in all) |
+
+### resize mode (`Ctrl+n`)
+
+| key | action |
+|-----|--------|
+| `←↓↑→` or `hjkl` | resize in direction |
+| `+` / `-` | increase/decrease |
+
+### scroll mode (`Ctrl+s`)
+
+| key | action |
+|-----|--------|
+| `↓↑` or `jk` | scroll |
+| `d` / `u` | half page down/up |
+| `e` | edit scrollback in `$EDITOR` |
+| `s` | search |
+| `/` | search down |
+| `?` | search up |
+
+### session mode (`Ctrl+o`)
+
+| key | action |
+|-----|--------|
+| `d` | detach |
+| `w` | session manager |
+
+### quick tips
+
+```bash
+zellij                    # start new session
+zellij a                  # attach to existing session
+zellij -s name            # start named session
+zellij ls                 # list sessions
+zellij k name             # kill session
+```
+
+press `Esc` or `Enter` to exit any mode and return to normal.

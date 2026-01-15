@@ -650,6 +650,40 @@ install_neovim() {
     log_success "neovim $version installed"
 }
 
+# Install zellij terminal multiplexer
+install_zellij() {
+    local current_version=""
+    if has_cmd zellij; then
+        current_version=$(zellij --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+    fi
+
+    local latest_tag
+    latest_tag=$(get_latest_release "zellij-org/zellij") || return 0
+    local version="${latest_tag#v}"
+
+    if [[ "$current_version" == "$version" ]] && [[ -z "${FORCE_UPDATE:-}" ]]; then
+        log_success "zellij $current_version already installed (latest)"
+        return
+    fi
+
+    log_info "Installing zellij $version..."
+    local zellij_arch
+    case "$ARCH" in
+        x86_64)  zellij_arch="x86_64-unknown-linux-musl" ;;
+        aarch64) zellij_arch="aarch64-unknown-linux-musl" ;;
+        *) log_error "Unsupported architecture: $ARCH"; return 1 ;;
+    esac
+
+    local tmpdir
+    tmpdir=$(mktemp -d)
+    curl -fsSL "https://github.com/zellij-org/zellij/releases/download/${latest_tag}/zellij-${zellij_arch}.tar.gz" \
+        | tar -xz -C "$tmpdir"
+    $SUDO mv "$tmpdir/zellij" /usr/local/bin/
+    rm -rf "$tmpdir"
+    $SUDO chmod +x /usr/local/bin/zellij
+    log_success "zellij $version installed"
+}
+
 # Install Claude Code CLI
 install_claude_code() {
     if has_cmd claude; then
@@ -951,6 +985,7 @@ install_base() {
     install_direnv
     install_fnm
     install_neovim
+    install_zellij
 
     # Claude Code
     if has_cmd npm; then
