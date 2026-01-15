@@ -713,9 +713,66 @@ install_claude_plugins() {
     claude plugin install ralph-loop@claude-plugins-official 2>/dev/null || true
 
     log_info "Configuring MCP servers..."
-    # Use --scope user for global config, --headless --isolated for headless Linux servers
-    claude mcp add --scope user chrome-devtools -- npx chrome-devtools-mcp@latest --headless --isolated 2>/dev/null || true
+    # Configure chrome-devtools-mcp to connect to a running Chromium instance
+    # The start-chromium script (installed below) handles launching Chromium with remote debugging
+    claude mcp remove chrome-devtools 2>/dev/null || true
+    claude mcp add --scope user chrome-devtools -- npx chrome-devtools-mcp@latest --browserUrl http://127.0.0.1:9222 2>/dev/null || true
     log_success "Claude Code plugins and MCP servers configured"
+}
+
+# Install start-chromium helper script
+install_start_chromium() {
+    log_info "Installing start-chromium helper..."
+    $SUDO tee /usr/local/bin/start-chromium > /dev/null << 'SCRIPT'
+#!/bin/bash
+# Start Chromium with remote debugging for chrome-devtools-mcp
+# Usage: start-chromium [--kill]
+
+if [[ "$1" == "--kill" ]]; then
+    pkill -f "chromium.*remote-debugging" 2>/dev/null && echo "Killed chromium" || echo "No chromium running"
+    exit 0
+fi
+
+# Kill any existing instance
+pkill -f "chromium.*remote-debugging" 2>/dev/null || true
+
+# Find chromium binary
+CHROMIUM=""
+for bin in /usr/bin/chromium-browser /usr/bin/chromium /snap/bin/chromium; do
+    if [[ -x "$bin" ]]; then
+        CHROMIUM="$bin"
+        break
+    fi
+done
+
+if [[ -z "$CHROMIUM" ]]; then
+    echo "Error: chromium not found"
+    exit 1
+fi
+
+# Start chromium in headless mode with remote debugging
+"$CHROMIUM" \
+    --headless \
+    --no-sandbox \
+    --disable-gpu \
+    --disable-software-rasterizer \
+    --remote-debugging-port=9222 \
+    --remote-debugging-address=127.0.0.1 \
+    >/dev/null 2>&1 &
+
+# Wait for it to start
+sleep 2
+
+# Verify it's running
+if curl -s http://127.0.0.1:9222/json/version >/dev/null 2>&1; then
+    echo "Chromium started with remote debugging on port 9222"
+else
+    echo "Warning: Chromium may have failed to start"
+    exit 1
+fi
+SCRIPT
+    $SUDO chmod +x /usr/local/bin/start-chromium
+    log_success "start-chromium helper installed"
 }
 
 # Install dotfiles
@@ -987,6 +1044,9 @@ install_base() {
     install_neovim
     install_zellij
 
+    # Helper scripts
+    install_start_chromium
+
     # Claude Code
     if has_cmd npm; then
         install_claude_code
@@ -1117,6 +1177,7 @@ main() {
     echo "Or start a new terminal session."
     echo ""
     echo "Other commands:"
+    echo "  start-chromium   Start Chromium for chrome-devtools MCP"
     echo "  claude update    Update Claude Code"
     echo ""
 }
