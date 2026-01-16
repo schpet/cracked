@@ -72,6 +72,8 @@ install_apt_packages() {
     log_info "Installing system packages..."
     export DEBIAN_FRONTEND=noninteractive
     $SUDO apt-get update
+    # Fix any broken packages from previous runs before installing
+    $SUDO apt-get install -f -y
     $SUDO apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y --no-install-recommends \
         sudo \
         ca-certificates \
