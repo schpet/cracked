@@ -90,8 +90,17 @@ install_apt_packages() {
         nodejs \
         npm \
         tmux \
-        chromium \
-        chromium-driver
+        fonts-liberation \
+        libnss3 \
+        libatk-bridge2.0-0 \
+        libdrm2 \
+        libxkbcommon0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libgbm1 \
+        libasound2t64
 
     # Create fd symlink if it doesn't exist
     if [[ -f /usr/bin/fdfind ]] && [[ ! -f /usr/local/bin/fd ]]; then
@@ -202,6 +211,22 @@ TERMINFO
     fi
 
     log_success "System packages installed"
+}
+
+# Install Google Chrome for headless browsing
+install_google_chrome() {
+    if has_cmd google-chrome || has_cmd google-chrome-stable; then
+        log_success "Google Chrome already installed"
+        return
+    fi
+
+    log_info "Installing Google Chrome..."
+    local tmpfile
+    tmpfile=$(mktemp --suffix=.deb)
+    curl -fsSL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o "$tmpfile"
+    $SUDO dpkg -i "$tmpfile" 2>/dev/null || $SUDO apt-get -f install -y
+    rm "$tmpfile"
+    log_success "Google Chrome installed"
 }
 
 # Install eza (ls replacement)
@@ -725,51 +750,70 @@ install_start_chromium() {
     log_info "Installing start-chromium helper..."
     $SUDO tee /usr/local/bin/start-chromium > /dev/null << 'SCRIPT'
 #!/bin/bash
-# Start Chromium with remote debugging for chrome-devtools-mcp
-# Usage: start-chromium [--kill]
+# Start Chrome/Chromium with remote debugging for chrome-devtools-mcp
+# Usage: start-chromium [--kill] [--status]
 
 if [[ "$1" == "--kill" ]]; then
-    pkill -f "chromium.*remote-debugging" 2>/dev/null && echo "Killed chromium" || echo "No chromium running"
+    pkill -f "remote-debugging-port=9222" 2>/dev/null && echo "Killed browser" || echo "No browser running"
     exit 0
 fi
 
-# Kill any existing instance
-pkill -f "chromium.*remote-debugging" 2>/dev/null || true
+if [[ "$1" == "--status" ]]; then
+    if curl -s http://127.0.0.1:9222/json/version >/dev/null 2>&1; then
+        echo "Browser running on port 9222"
+        curl -s http://127.0.0.1:9222/json/version | jq -r '.Browser' 2>/dev/null || true
+        exit 0
+    else
+        echo "No browser running on port 9222"
+        exit 1
+    fi
+fi
 
-# Find chromium binary
-CHROMIUM=""
-for bin in /usr/bin/chromium-browser /usr/bin/chromium /snap/bin/chromium; do
+# Kill any existing instance
+pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+sleep 1
+
+# Find browser binary (prefer Google Chrome, fall back to Chromium)
+BROWSER=""
+for bin in /usr/bin/google-chrome-stable /usr/bin/google-chrome /usr/bin/chromium-browser /usr/bin/chromium /snap/bin/chromium; do
     if [[ -x "$bin" ]]; then
-        CHROMIUM="$bin"
+        BROWSER="$bin"
         break
     fi
 done
 
-if [[ -z "$CHROMIUM" ]]; then
-    echo "Error: chromium not found"
+if [[ -z "$BROWSER" ]]; then
+    echo "Error: No browser found (google-chrome or chromium)"
+    echo "Install with: sudo apt-get install -y google-chrome-stable"
     exit 1
 fi
 
-# Start chromium in headless mode with remote debugging
-"$CHROMIUM" \
+echo "Starting $BROWSER in headless mode..."
+
+# Start browser in headless mode with remote debugging
+# These flags are required for running without a display in containers
+"$BROWSER" \
     --headless \
     --no-sandbox \
     --disable-gpu \
     --disable-software-rasterizer \
+    --disable-dev-shm-usage \
     --remote-debugging-port=9222 \
     --remote-debugging-address=127.0.0.1 \
     >/dev/null 2>&1 &
 
 # Wait for it to start
-sleep 2
+for i in {1..10}; do
+    if curl -s http://127.0.0.1:9222/json/version >/dev/null 2>&1; then
+        echo "Browser started with remote debugging on port 9222"
+        curl -s http://127.0.0.1:9222/json/version | jq -r '.Browser' 2>/dev/null || true
+        exit 0
+    fi
+    sleep 0.5
+done
 
-# Verify it's running
-if curl -s http://127.0.0.1:9222/json/version >/dev/null 2>&1; then
-    echo "Chromium started with remote debugging on port 9222"
-else
-    echo "Warning: Chromium may have failed to start"
-    exit 1
-fi
+echo "Error: Browser failed to start"
+exit 1
 SCRIPT
     $SUDO chmod +x /usr/local/bin/start-chromium
     log_success "start-chromium helper installed"
@@ -1023,6 +1067,7 @@ install_base() {
     # System packages (only on Debian/Ubuntu)
     if [[ -f /etc/debian_version ]]; then
         install_apt_packages
+        install_google_chrome
     else
         log_warn "Not a Debian-based system, skipping apt packages"
     fi
