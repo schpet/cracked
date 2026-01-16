@@ -91,16 +91,24 @@ install_apt_packages() {
         npm \
         tmux \
         fonts-liberation \
-        libnss3 \
+        libasound2 \
         libatk-bridge2.0-0 \
+        libatk1.0-0 \
+        libatspi2.0-0 \
+        libcairo2 \
+        libcups2 \
         libdrm2 \
-        libxkbcommon0 \
+        libgbm1 \
+        libgtk-3-0 \
+        libnss3 \
+        libpango-1.0-0 \
+        libvulkan1 \
         libxcomposite1 \
         libxdamage1 \
         libxfixes3 \
+        libxkbcommon0 \
         libxrandr2 \
-        libgbm1 \
-        libasound2t64
+        xdg-utils
 
     # Create fd symlink if it doesn't exist
     if [[ -f /usr/bin/fdfind ]] && [[ ! -f /usr/local/bin/fd ]]; then
