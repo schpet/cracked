@@ -90,25 +90,7 @@ install_apt_packages() {
         nodejs \
         npm \
         tmux \
-        fonts-liberation \
-        libasound2 \
-        libatk-bridge2.0-0 \
-        libatk1.0-0 \
-        libatspi2.0-0 \
-        libcairo2 \
-        libcups2 \
-        libdrm2 \
-        libgbm1 \
-        libgtk-3-0 \
-        libnss3 \
-        libpango-1.0-0 \
-        libvulkan1 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxfixes3 \
-        libxkbcommon0 \
-        libxrandr2 \
-        xdg-utils
+        wget
 
     # Create fd symlink if it doesn't exist
     if [[ -f /usr/bin/fdfind ]] && [[ ! -f /usr/local/bin/fd ]]; then
@@ -232,9 +214,17 @@ install_google_chrome() {
     local tmpfile
     tmpfile=$(mktemp --suffix=.deb)
     curl -fsSL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o "$tmpfile"
-    $SUDO dpkg -i "$tmpfile" 2>/dev/null || $SUDO apt-get -f install -y
+    # dpkg will fail on missing deps, then apt-get -f install resolves them
+    $SUDO dpkg -i "$tmpfile" || true
+    $SUDO apt-get install -f -y
     rm "$tmpfile"
-    log_success "Google Chrome installed"
+
+    if has_cmd google-chrome || has_cmd google-chrome-stable; then
+        log_success "Google Chrome installed"
+    else
+        log_error "Google Chrome installation failed"
+        return 1
+    fi
 }
 
 # Install eza (ls replacement)
