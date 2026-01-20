@@ -868,6 +868,19 @@ install_deno_tools() {
     cd "$ebo_dir"
     deno install -c ./deno.json -A -g -f -n ebo ./main.ts || log_warn "ebo install had issues"
 
+    # linear-cli
+    local linear_dir="${tools_dir}/linear-cli"
+    if [[ -d "$linear_dir" ]]; then
+        log_info "Updating linear-cli..."
+        cd "$linear_dir"
+        git pull --ff-only || log_warn "Could not update linear-cli"
+    else
+        log_info "Installing linear-cli..."
+        git clone --depth 1 https://github.com/schpet/linear-cli.git "$linear_dir"
+    fi
+    cd "$linear_dir"
+    deno task install || log_warn "linear-cli install had issues"
+
     log_success "Deno tools installed"
 }
 
