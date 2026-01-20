@@ -90,7 +90,6 @@ install_apt_packages() {
         unzip \
         xz-utils \
         nodejs \
-        npm \
         tmux \
         wget
 
