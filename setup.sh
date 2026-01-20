@@ -377,6 +377,18 @@ install_gh() {
     log_success "gh $version installed"
 }
 
+# Install Heroku CLI
+install_heroku() {
+    if has_cmd heroku; then
+        log_success "Heroku CLI already installed"
+        return
+    fi
+
+    log_info "Installing Heroku CLI..."
+    curl -fsSL https://cli-assets.heroku.com/install.sh | $SUDO sh
+    log_success "Heroku CLI installed"
+}
+
 # Install git-delta
 install_delta() {
     local current_version=""
@@ -1090,6 +1102,7 @@ install_base() {
     install_deno
     install_just
     install_gh
+    install_heroku
     install_delta
     install_sd
     install_starship
