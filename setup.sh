@@ -713,7 +713,8 @@ install_zellij() {
     local tmpdir
     tmpdir=$(mktemp -d)
     curl -fsSL "https://github.com/zellij-org/zellij/releases/download/${latest_tag}/zellij-${zellij_arch}.tar.gz" \
-        | tar -xz -C "$tmpdir"
+        -o "$tmpdir/zellij.tar.gz"
+    tar -xzf "$tmpdir/zellij.tar.gz" -C "$tmpdir"
     $SUDO mv "$tmpdir/zellij" /usr/local/bin/
     rm -rf "$tmpdir"
     $SUDO chmod +x /usr/local/bin/zellij
