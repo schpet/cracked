@@ -846,7 +846,10 @@ install_dotfiles() {
 
     log_info "Installing dotfiles with stow..."
     cd "$dotfiles_dir"
+    # --adopt moves existing files into dotfiles dir, then we restore from git
+    # This ensures dotfiles always win over pre-existing system config
     stow . -t "$HOME" -v 2 --adopt 2>&1 || log_warn "Stow had some issues (this may be normal)"
+    git checkout . 2>/dev/null || true
     log_success "Dotfiles installed"
 }
 
