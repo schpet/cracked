@@ -728,7 +728,9 @@ install_claude_code() {
         return
     fi
     log_info "Installing Claude Code CLI..."
-    $SUDO npm install -g @anthropic-ai/claude-code@latest || log_warn "Claude Code install had issues"
+    curl -fsSL https://claude.ai/install.sh | bash || log_warn "Claude Code install had issues"
+    # Add to PATH for current session
+    export PATH="${HOME}/.local/bin:${PATH}"
     log_success "Claude Code CLI installed"
 }
 
@@ -1121,13 +1123,9 @@ install_base() {
     # Helper scripts
     install_start_chromium
 
-    # Claude Code
-    if has_cmd npm; then
-        install_claude_code
-        install_claude_plugins
-    else
-        log_warn "npm not found, skipping Claude Code"
-    fi
+    # Claude Code (uses native installer, no npm dependency)
+    install_claude_code
+    install_claude_plugins
 
     # User-level setup (dotfiles, deno tools, cracked repo)
     if [[ $EUID -ne 0 ]]; then
