@@ -759,6 +759,30 @@ install_claude_plugins() {
     log_success "Claude Code plugins and MCP servers configured"
 }
 
+# Fix Claude Code plugin JSON files
+# Claude Code hangs if these files exist but are empty (0 bytes)
+# This ensures they contain valid JSON
+fix_claude_plugin_json_files() {
+    local plugins_dir="${HOME}/.claude/plugins"
+
+    if [[ ! -d "$plugins_dir" ]]; then
+        return
+    fi
+
+    log_info "Ensuring Claude plugin JSON files have valid content..."
+
+    for json_file in known_marketplaces.json installed_plugins.json install-counts-cache.json; do
+        local file_path="${plugins_dir}/${json_file}"
+        if [[ -f "$file_path" ]] && [[ ! -s "$file_path" ]]; then
+            # File exists but is empty - fix it
+            echo "{}" > "$file_path"
+            log_info "Fixed empty file: $file_path"
+        fi
+    done
+
+    log_success "Claude plugin JSON files validated"
+}
+
 # Install start-chromium helper script
 install_start_chromium() {
     log_info "Installing start-chromium helper..."
@@ -1130,6 +1154,7 @@ install_base() {
     # User-level setup (dotfiles, deno tools, cracked repo)
     if [[ $EUID -ne 0 ]]; then
         install_dotfiles
+        fix_claude_plugin_json_files
         install_cracked_repo
         if has_cmd deno && has_cmd just; then
             install_deno_tools
