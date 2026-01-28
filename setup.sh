@@ -54,15 +54,15 @@ has_cmd() { command -v "$1" &> /dev/null; }
 # Get latest GitHub release tag for a repo
 get_latest_release() {
     local repo="$1"
-    local auth_header=""
+    local curl_args=(-fsSL)
     if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-        auth_header="-H \"Authorization: token $GITHUB_TOKEN\""
+        curl_args+=(-H "Authorization: token $GITHUB_TOKEN")
     fi
     local result
-    result=$(curl -fsSL $auth_header "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    result=$(curl "${curl_args[@]}" "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
     if [[ -z "$result" ]]; then
-        log_warn "Could not fetch latest release for $repo (rate limited?). Skipping..."
-        return 1
+        log_error "Could not fetch latest release for $repo (rate limited or network error)"
+        exit 1
     fi
     echo "$result"
 }
