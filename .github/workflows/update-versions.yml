@@ -1,0 +1,80 @@
+name: Update Tool Versions
+
+on:
+  schedule:
+    # Run daily at 6am UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-versions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch latest versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          repos=(
+            "eza-community/eza"
+            "jj-vcs/jj"
+            "denoland/deno"
+            "casey/just"
+            "cli/cli"
+            "dandavison/delta"
+            "chmln/sd"
+            "starship/starship"
+            "schpet/changelog"
+            "schpet/svbump"
+            "atuinsh/atuin"
+            "direnv/direnv"
+            "Schniz/fnm"
+            "neovim/neovim"
+            "zellij-org/zellij"
+            "fables-tales/rubyfmt"
+          )
+
+          echo "{" > versions.json.tmp
+          first=true
+          for repo in "${repos[@]}"; do
+            tag=$(gh api "repos/${repo}/releases/latest" --jq '.tag_name // empty' 2>/dev/null || echo "")
+            if [[ -n "$tag" ]]; then
+              if $first; then
+                first=false
+              else
+                echo "," >> versions.json.tmp
+              fi
+              printf '  "%s": "%s"' "$repo" "$tag" >> versions.json.tmp
+            fi
+          done
+          echo "" >> versions.json.tmp
+          echo "}" >> versions.json.tmp
+
+          # Pretty print with jq
+          jq . versions.json.tmp > versions.json
+          rm versions.json.tmp
+
+          echo "Updated versions:"
+          cat versions.json
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet versions.json; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add versions.json
+          git commit -m "Update tool versions"
+          git push

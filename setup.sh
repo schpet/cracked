@@ -51,9 +51,32 @@ check_sudo() {
 # Detect if a command exists
 has_cmd() { command -v "$1" &> /dev/null; }
 
+# URL for cached versions file
+VERSIONS_URL="https://raw.githubusercontent.com/schpet/cracked/main/versions.json"
+CACHED_VERSIONS=""
+
+# Fetch and cache versions.json on first use
+fetch_cached_versions() {
+    if [[ -z "$CACHED_VERSIONS" ]]; then
+        CACHED_VERSIONS=$(curl -fsSL "$VERSIONS_URL" 2>/dev/null || echo "{}")
+    fi
+}
+
 # Get latest GitHub release tag for a repo
+# First checks cached versions.json, falls back to GitHub API
 get_latest_release() {
     local repo="$1"
+
+    # Try cached version first
+    fetch_cached_versions
+    local cached_version
+    cached_version=$(echo "$CACHED_VERSIONS" | grep "\"$repo\"" | sed -E 's/.*: *"([^"]+)".*/\1/')
+    if [[ -n "$cached_version" ]]; then
+        echo "$cached_version"
+        return
+    fi
+
+    # Fall back to GitHub API
     local curl_args=(-fsSL)
     if [[ -n "${GITHUB_TOKEN:-}" ]]; then
         curl_args+=(-H "Authorization: token $GITHUB_TOKEN")

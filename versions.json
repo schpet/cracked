@@ -1,0 +1,18 @@
+{
+  "eza-community/eza": "v0.23.4",
+  "jj-vcs/jj": "v0.37.0",
+  "denoland/deno": "v2.6.6",
+  "casey/just": "1.46.0",
+  "cli/cli": "v2.86.0",
+  "dandavison/delta": "0.18.2",
+  "chmln/sd": "v1.0.0",
+  "starship/starship": "v1.24.2",
+  "schpet/changelog": "v1.0.0",
+  "schpet/svbump": "v1.0.0",
+  "atuinsh/atuin": "v18.11.0",
+  "direnv/direnv": "v2.37.1",
+  "Schniz/fnm": "v1.38.1",
+  "neovim/neovim": "v0.11.6",
+  "zellij-org/zellij": "v0.43.1",
+  "fables-tales/rubyfmt": "v0.12.0"
+}
