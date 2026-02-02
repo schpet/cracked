@@ -96,7 +96,7 @@ install_apt_packages() {
     export DEBIAN_FRONTEND=noninteractive
     $SUDO apt-get update
     # Fix any broken packages from previous runs before installing
-    $SUDO apt-get install -f -y
+    $SUDO apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -f -y
     $SUDO apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y --no-install-recommends \
         sudo \
         ca-certificates \
@@ -239,8 +239,9 @@ install_google_chrome() {
     tmpfile=$(mktemp --suffix=.deb)
     curl -fsSL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o "$tmpfile"
     # dpkg will fail on missing deps, then apt-get -f install resolves them
+    export DEBIAN_FRONTEND=noninteractive
     $SUDO dpkg -i "$tmpfile" || true
-    $SUDO apt-get install -f -y
+    $SUDO apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -f -y
     rm "$tmpfile"
 
     if has_cmd google-chrome || has_cmd google-chrome-stable; then
