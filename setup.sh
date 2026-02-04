@@ -768,12 +768,14 @@ install_claude_plugins() {
     log_info "Installing Claude Code plugins..."
     claude plugin marketplace add schpet/toolbox 2>/dev/null || true
     claude plugin marketplace add anthropics/claude-plugins-official 2>/dev/null || true
+    claude plugin marketplace add schpet/linear-cli 2>/dev/null || true
     claude plugin install jj-vcs@toolbox 2>/dev/null || true
     claude plugin install changelog@toolbox 2>/dev/null || true
     claude plugin install svbump@toolbox 2>/dev/null || true
     claude plugin install chores@toolbox 2>/dev/null || true
     claude plugin install speccer@toolbox 2>/dev/null || true
     claude plugin install ralph-loop@claude-plugins-official 2>/dev/null || true
+    claude plugin install linear-cli@linear-cli 2>/dev/null || true
 
     log_info "Configuring MCP servers..."
     # Configure chrome-devtools-mcp to connect to a running Chromium instance
