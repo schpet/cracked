@@ -1,6 +1,6 @@
 {
   "eza-community/eza": "v0.23.4",
-  "jj-vcs/jj": "v0.37.0",
+  "jj-vcs/jj": "v0.38.0",
   "denoland/deno": "v2.6.8",
   "casey/just": "1.46.0",
   "cli/cli": "v2.86.0",
