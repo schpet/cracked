@@ -3,7 +3,7 @@
   "jj-vcs/jj": "v0.39.0",
   "denoland/deno": "v2.7.4",
   "casey/just": "1.46.0",
-  "cli/cli": "v2.87.3",
+  "cli/cli": "v2.88.0",
   "dandavison/delta": "0.18.2",
   "chmln/sd": "v1.1.0",
   "starship/starship": "v1.24.2",
